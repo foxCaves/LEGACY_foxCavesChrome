@@ -16,6 +16,7 @@
 		"https://fox.gy/",
 		"<all_urls>",
 		"tabs",
-		"clipboardWrite"
+		"clipboardWrite",
+		"contextMenus"
 	]
 }

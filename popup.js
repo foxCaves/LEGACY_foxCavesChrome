@@ -1,3 +1,10 @@
+/*chrome.extension.onRequest.addListener(function(msg) {
+	if(msg.dorequest) {
+		doRequest(msg, null, function() { sendResponse("DONE"); });
+		return true;
+	}
+});*/
+
 function shortenTabURL() {
 	doRequest({type: "shorten"});
 }
@@ -6,7 +13,7 @@ function screenshotTab() {
 	doRequest({type: "screenshot"});
 }
 
-function doRequest(obj, callback) {
+function doRequest(obj, callback, dccallback) {
 	document.getElementById("actions").style.display = "none";
 	document.getElementById("loading").style.display = "";
 	var port = chrome.extension.connect({name: "bgcallback"});
@@ -17,6 +24,9 @@ function doRequest(obj, callback) {
 	});
 	if(callback) {
 		port.onMessage.addListener(callback);
+	}
+	if(dccallback) {
+		port.onDisconnect.addListener(dccallback);
 	}
 	port.onMessage.addListener(function(msg) {
 		if(msg.progress) {

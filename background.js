@@ -9,7 +9,13 @@ chrome.extension.onConnect.addListener(function(port) {
 				break;
 			case "screenshot":
 				screenshotTab(port);
-				break;	
+				break;
+			case "savefile":
+				saveFile(msg.dataUrl, msg.filename, port);
+				break;
+			case "shortenurl":
+				shortenURL(msg.linkUrl, port);
+				break;
 		}
 	}
 	port.onMessage.addListener(handshakeListener);
@@ -25,36 +31,44 @@ function copyToClipboard(text) {
 
 function shortenTabURL(port) {
 	chrome.tabs.getSelected(null, function(tab) {
-		sendAPIRequest("shorten?" + tab.url, function(req) {
-			copyToClipboard("https://fox.gy/g" + req.responseText.trim());
-			port.disconnect();
-			alert("Link shortened. Short link copied to clipboard!");
-		}, port);
+		shortenURL(tab.url, port);
 	});
+}
+
+function shortenURL(url, port) {
+	sendAPIRequest("shorten?" + url, function(req) {
+		copyToClipboard("https://fox.gy/g" + req.responseText.trim());
+		if(port) port.disconnect();
+		alert("Link shortened. Short link copied to clipboard!");
+	}, port);
+}
+
+function saveFile(dataURL, filename, port) {
+	var x = dataURL.lastIndexOf(",");
+	if(!x) x = dataURL.lastIndexOf(";");
+	var data = Base64Binary.decodeArrayBuffer(dataURL.substr(x + 1));
+	
+	sendAPIRequest("create?" + filename, function(req) {
+		if(req.status != 200) {
+			alert("Error: " + req.responseText);
+			return;
+		}
+		
+		var file = req.responseText.split("\n");
+		var fileInfo = file[1].split(">");
+		var fileid = fileInfo[0];
+		
+		copyToClipboard("https://fox.gy/v" + fileid);
+		if(port) port.disconnect();
+		alert("Screenshot upladed. Link copied to clipboard!");
+	}, port, "PUT", data);
 }
 
 function screenshotTab(port) {
 	chrome.tabs.captureVisibleTab(null, {format: "png"}, function(dataURL) {
-		var x = dataURL.lastIndexOf(",");
-		if(!x) x = dataURL.lastIndexOf(";");
-		var data = Base64Binary.decodeArrayBuffer(dataURL.substr(x + 1));
-		
 		chrome.tabs.getSelected(null, function(tab) {
 			var filename = tab.title + ".png";
-			sendAPIRequest("create?" + filename, function(req) {
-				if(req.status != 200) {
-					alert("Error: " + req.responseText);
-					return;
-				}
-				
-				var file = req.responseText.split("\n");
-				var fileInfo = file[1].split(">");
-				var fileid = fileInfo[0];
-				
-				copyToClipboard("https://fox.gy/v" + fileid);
-				port.disconnect();
-				alert("Screenshot upladed. Link copied to clipboard!");
-			}, port, "PUT", data);
+			saveFile(dataURL, filename, port);
 		});
 	});
 }
