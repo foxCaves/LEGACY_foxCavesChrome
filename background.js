@@ -1,11 +1,10 @@
 chrome.extension.onMessage.addListener(function(obj, sender, sendResponse) {
-	console.log(obj);
 	switch(obj.action) {
 		case "shorten":
-			shortenTabURL();
+			shortenTabURL(sendResponse);
 			break;
 		case "screenshot":
-			screenshotTab();
+			screenshotTab(sendResponse);
 			break;
 	}
 });
@@ -18,16 +17,17 @@ function copyToClipboard(text) {
 	document.execCommand("copy");
 }
 
-function shortenTabURL() {
+function shortenTabURL(sendResponse) {
 	chrome.tabs.getSelected(null, function(tab) {
 		sendAPIRequest("shorten?" + tab.url, function(req) {
 			copyToClipboard("https://fox.gy/g" + req.responseText.trim());
+			sendResponse("DONE");
 			alert("Link shortened. Short link copied to clipboard!");
 		});
 	});
 }
 
-function screenshotTab() {
+function screenshotTab(sendResponse) {
 	chrome.tabs.captureVisibleTab(null, {format: "png"}, function(dataURL) {
 		var x = dataURL.lastIndexOf(",");
 		if(!x) x = dataURL.lastIndexOf(";");
@@ -46,6 +46,7 @@ function screenshotTab() {
 				var fileid = fileInfo[0];
 				
 				copyToClipboard("https://fox.gy/v" + fileid);
+				sendResponse("DONE");
 				alert("Screenshot upladed. Link copied to clipboard!");
 			}, "PUT", data);
 		});

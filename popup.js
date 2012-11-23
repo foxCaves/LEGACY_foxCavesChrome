@@ -1,9 +1,18 @@
 function shortenTabURL() {
-	chrome.extension.sendMessage({action: "shorten"});
+	doRequest({action: "shorten"});
 }
 
 function screenshotTab() {
-	chrome.extension.sendMessage({action: "screenshot"});
+	doRequest({action: "screenshot"});
+}
+
+function doRequest(obj) {
+	document.getElementById("actions").style.display = "none";
+	document.getElementById("loading").style.display = "";
+	chrome.extension.sendMessage(obj, function(reply) {
+		document.getElementById("actions").style.display = "";
+		document.getElementById("loading").style.display = "none";
+	});
 }
 
 window.onload = function(e) {
