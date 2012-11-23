@@ -1,12 +1,18 @@
-chrome.extension.onMessage.addListener(function(obj, sender, sendResponse) {
-	switch(obj.action) {
-		case "shorten":
-			shortenTabURL(sendResponse);
-			break;
-		case "screenshot":
-			screenshotTab(sendResponse);
-			break;
+chrome.extension.onConnect.addListener(function(port) {
+	if(port.name != "bgcallback") return;
+	var handshakeListener;
+	handshakeListener = function(msg) {
+		port.onMessage.removeListener(handshakeListener);
+		switch(msg.type) {
+			case "shorten":
+				shortenTabURL(port);
+				break;
+			case "screenshot":
+				screenshotTab(port);
+				break;	
+		}
 	}
+	port.onMessage.addListener(handshakeListener);
 });
 
 function copyToClipboard(text) {
@@ -17,17 +23,17 @@ function copyToClipboard(text) {
 	document.execCommand("copy");
 }
 
-function shortenTabURL(sendResponse) {
+function shortenTabURL(port) {
 	chrome.tabs.getSelected(null, function(tab) {
 		sendAPIRequest("shorten?" + tab.url, function(req) {
 			copyToClipboard("https://fox.gy/g" + req.responseText.trim());
-			sendResponse("DONE");
+			port.disconnect();
 			alert("Link shortened. Short link copied to clipboard!");
-		});
+		}, port);
 	});
 }
 
-function screenshotTab(sendResponse) {
+function screenshotTab(port) {
 	chrome.tabs.captureVisibleTab(null, {format: "png"}, function(dataURL) {
 		var x = dataURL.lastIndexOf(",");
 		if(!x) x = dataURL.lastIndexOf(";");
@@ -46,14 +52,32 @@ function screenshotTab(sendResponse) {
 				var fileid = fileInfo[0];
 				
 				copyToClipboard("https://fox.gy/v" + fileid);
-				sendResponse("DONE");
+				port.disconnect();
 				alert("Screenshot upladed. Link copied to clipboard!");
-			}, "PUT", data);
+			}, port, "PUT", data);
 		});
 	});
 }
 
-function sendAPIRequest(url, callback, method, body) {
+function _setUploadProgress(progress, port) {
+	port.postMessage({progress: progress});
+}
+
+function uploadStart(evt, port) {
+	_setUploadProgress(0, port);
+}
+
+function uploadComplete(evt, port) {
+	_setUploadProgress(100, port);
+}
+
+function uploadProgress(evt, port) {
+	if(evt.lengthComputable) {
+		_setUploadProgress((evt.loaded / evt.total) * 100.0, port);
+	}
+}
+
+function sendAPIRequest(url, callback, port, method, body) {
 	if(!method) method = "GET";
 	if(!body) body = null;
 	
@@ -68,5 +92,10 @@ function sendAPIRequest(url, callback, method, body) {
 		}
 		callback(req);
 	};
+	if(port) {
+		req.upload.addEventListener("loadstart", function(evt) { uploadStart(evt, port); }, false);
+		req.upload.addEventListener("progress", function(evt) { uploadProgress(evt, port); }, false);
+		req.upload.addEventListener("load", function(evt) { uploadComplete(evt, port); }, false);
+	}
 	req.send(body);
 }

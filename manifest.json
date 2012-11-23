@@ -8,13 +8,12 @@
 		"default_popup": "popup.html"
 	},
 	"background": {
-		"page": "background.html"
+		"page": "background.html",
+		"persistent": false
 	},
 	"permissions": [
 		"https://foxcav.es/",
-		"http://foxcav.es/",
 		"https://fox.gy/",
-		"http://fox.gy/",
 		"<all_urls>",
 		"tabs",
 		"clipboardWrite"
