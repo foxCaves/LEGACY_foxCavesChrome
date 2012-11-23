@@ -43,11 +43,26 @@ function shortenURL(url, port) {
 	}, port);
 }
 
-function saveFile(dataURL, filename, port) {
-	var x = dataURL.lastIndexOf(",");
-	if(!x) x = dataURL.lastIndexOf(";");
-	var data = Base64Binary.decodeArrayBuffer(dataURL.substr(x + 1));
+function saveURL(url) {
+	var x = url.lastIndexOf("/");
+	var filename = url.substr(x + 1);
+	x = url.indexOf("?");
+	if(x && x >= 0) filename = filename.substring(0, x - 1);
 	
+	var req = new XMLHttpRequest();
+	req.responseType = "arraybuffer";
+	req.open("GET", url, true);
+	req.onload = function() {
+		if(req.status != 200) {
+			alert("Error downloading file to reupload");
+			return;
+		}
+		saveFile(req.response, filename, null);
+	};
+	req.send(null);
+}
+
+function saveFile(data, filename, port) {
 	sendAPIRequest("create?" + filename, function(req) {
 		if(req.status != 200) {
 			alert("Error: " + req.responseText);
@@ -56,19 +71,27 @@ function saveFile(dataURL, filename, port) {
 		
 		var file = req.responseText.split("\n");
 		var fileInfo = file[1].split(">");
-		var fileid = fileInfo[0];
+		var fileID = fileInfo[0];
 		
-		copyToClipboard("https://fox.gy/v" + fileid);
+		copyToClipboard("https://fox.gy/v" + fileID);
 		if(port) port.disconnect();
-		alert("Screenshot upladed. Link copied to clipboard!");
+		alert("File uploaded. Link copied to clipboard!");
 	}, port, "PUT", data);
+}
+
+function saveDataURL(dataURL, filename, port) {
+	var x = dataURL.lastIndexOf(",");
+	if((!x) || x < 0) x = dataURL.lastIndexOf(";");
+	var data = Base64Binary.decodeArrayBuffer(dataURL.substr(x + 1));
+	
+	saveFile(data, filename, port);
 }
 
 function screenshotTab(port) {
 	chrome.tabs.captureVisibleTab(null, {format: "png"}, function(dataURL) {
 		chrome.tabs.getSelected(null, function(tab) {
 			var filename = tab.title + ".png";
-			saveFile(dataURL, filename, port);
+			saveDataURL(dataURL, filename, port);
 		});
 	});
 }

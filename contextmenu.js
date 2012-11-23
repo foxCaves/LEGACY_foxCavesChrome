@@ -2,7 +2,7 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 	switch(info.menuItemId) {
 		case "saveFile":
 			//chrome.extension.sendRequest({dorequest: true, type: "savefile", dataUrl: info.linkUrl});
-			saveFile(info.srcUrl, info.srcUrl);
+			saveURL(info.srcUrl);
 			break;
 		case "shortenLink":
 			//chrome.extension.sendRequest({dorequest: true, type: "shortenurl", linkUrl: info.linkUrl});
