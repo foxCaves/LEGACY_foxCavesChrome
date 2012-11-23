@@ -121,7 +121,7 @@ function sendAPIRequest(url, callback, port, method, body) {
 	var req = new XMLHttpRequest();
 	req.open(method, "https://foxcav.es/api/" + url, true);
 	req.onload = function() {
-		if(req.status == 403) {
+		if(req.status == 401) {
 			chrome.tabs.create({
 				url: "https://foxcav.es/login"
 			});
