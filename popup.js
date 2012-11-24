@@ -1,11 +1,3 @@
-function shortenTabURL() {
-	doRequest({req: "shorten"});
-}
-
-function screenshotTab() {
-	doRequest({req: "screenshot"});
-}
-
 function doRequest(obj) {
 	if(!obj.tabid) {
 		chrome.tabs.getSelected(null, function(tab) {
@@ -18,5 +10,13 @@ function doRequest(obj) {
 	}
 }
 
-document.getElementById("shorten-tab-url").addEventListener("click", shortenTabURL);
-document.getElementById("screenshot-tab").addEventListener("click", screenshotTab);
+function openNewTab(url) {
+	chrome.tabs.create({
+		url: "https://foxcav.es" + url
+	});
+}
+
+document.getElementById("shorten-tab-url").addEventListener("click", function() { doRequest({req: "shorten"}); });
+document.getElementById("screenshot-tab").addEventListener("click", function() { doRequest({req: "screenshot"}); });
+document.getElementById("open-my-files").addEventListener("click", function() { openNewTab("/myfiles") });
+document.getElementById("open-my-links").addEventListener("click", function() { openNewTab("/mylinks") });
