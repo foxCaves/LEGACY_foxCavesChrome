@@ -121,6 +121,7 @@ function sendAPIRequest(url, callback, tabid, method, body) {
 				chrome.tabs.create({
 					url: "https://foxcav.es/login"
 				});
+				_setUploadProgress(101, tabid);
 				return;
 			}
 			callback(req);
