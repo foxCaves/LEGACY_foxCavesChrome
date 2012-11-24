@@ -1,10 +1,10 @@
 chrome.contextMenus.onClicked.addListener(function(info, tab) {
 	switch(info.menuItemId) {
 		case "saveFile":
-			saveURL(info.srcUrl);
+			saveURL(info.srcUrl, tab.id);
 			break;
 		case "shortenLink":
-			shortenURL(info.linkUrl);
+			shortenURL(info.linkUrl, tab.id);
 			break;
 	}
 });

@@ -1,5 +1,5 @@
 chrome.extension.onMessage.addListener(function(msg, sender, sendMessage) {
-	switch(msg.dorequest) {
+	switch(msg.req) {
 		case "shorten":
 			shortenTabURL(msg.tabid);
 			break;
@@ -12,6 +12,8 @@ chrome.extension.onMessage.addListener(function(msg, sender, sendMessage) {
 		case "shortenurl":
 			shortenURL(msg.linkUrl, msg.tabid);
 			break;
+		default:
+			return;
 	}
 	sendMessage("OK");
 });
@@ -43,6 +45,8 @@ function saveURL(url, tabid) {
 	x = url.indexOf("?");
 	if(x && x >= 0) filename = filename.substring(0, x - 1);
 	
+	_setDisplayProgressText("Downloading from website...", 0.5, 0, tabid);
+	
 	var req = new XMLHttpRequest();
 	req.responseType = "arraybuffer";
 	req.open("GET", url, true);
@@ -51,12 +55,15 @@ function saveURL(url, tabid) {
 			alert("Error downloading file to reupload");
 			return;
 		}
-		saveFile(req.response, filename, tabid);
+		saveFile(req.response, filename, tabid, 0.5, 0.5);
 	};
+	req.addEventListener("loadstart", function(evt) { uploadStart(evt, 0.5, 0, tabid); }, false);
+	req.addEventListener("progress", function(evt) { uploadProgress(evt, 0.5, 0, tabid); }, false);
+	req.addEventListener("load", function(evt) { uploadComplete(evt, 0.5, 0, tabid); }, false);
 	req.send(null);
 }
 
-function saveFile(data, filename, tabid) {
+function saveFile(data, filename, tabid, progress_mult, progress_offset) {
 	sendAPIRequest("create?" + filename, function(req) {
 		if(req.status != 200) {
 			alert("Error: " + req.responseText);
@@ -69,7 +76,7 @@ function saveFile(data, filename, tabid) {
 		
 		copyToClipboard("https://fox.gy/v" + fileID);
 		alert("File uploaded. Link copied to clipboard!");
-	}, tabid, "PUT", data);
+	}, tabid, "PUT", data, progress_mult, progress_offset);
 }
 
 function saveDataURL(dataURL, filename, tabid) {
@@ -89,30 +96,40 @@ function screenshotTab(tabid) {
 	});
 }
 
-function _setUploadProgress(progress, tabid) {
-	chrome.tabs.sendMessage(tabid, {progress: progress});
+function _setDisplayProgressText(text, mult, offset, tabid) {
+	if(offset <= 0) offset = -1;
+	chrome.tabs.sendMessage(tabid, {progress: offset, text: text});
 }
 
-function uploadStart(evt, tabid) {
-	_setUploadProgress(0, tabid);
+function _setDisplayProgress(progress, mult, offset, tabid) {
+	chrome.tabs.sendMessage(tabid, {progress: ((progress * mult) + offset)});
 }
 
-function uploadComplete(evt, tabid) {
-	_setUploadProgress(100, tabid);
+function uploadStart(evt, mult, offset, tabid) {
+	_setDisplayProgress(0, mult, offset, tabid);
 }
 
-function uploadProgress(evt, tabid) {
+function uploadComplete(evt, mult, offset, tabid) {
+	if(offset + mult >= 1) {
+		_setDisplayProgressText("foxCaves server is processing...", mult, offset + mult, tabid);
+	}
+	_setDisplayProgress(100, mult, offset, tabid);
+}
+
+function uploadProgress(evt, mult, offset, tabid) {
 	if(evt.lengthComputable) {
-		_setUploadProgress((evt.loaded / evt.total) * 100.0, tabid);
+		_setDisplayProgress((evt.loaded / evt.total) * 100.0, mult, offset, tabid);
 	}
 }
 
-function sendAPIRequest(url, callback, tabid, method, body) {
+function sendAPIRequest(url, callback, tabid, method, body, progress_mult, progress_offset) {
 	if(!method) method = "GET";
 	if(!body) body = null;
+	if(!progress_mult) progress_mult = 1;
+	if(!progress_offset) progress_offset = 0;
 	
 	chrome.tabs.executeScript(tabid, {file: "loader.js"}, function(res) {
-		_setUploadProgress(-1, tabid);
+		_setDisplayProgressText("Uploading to foxCaves...", progress_mult, progress_offset, tabid);
 	
 		var req = new XMLHttpRequest();
 		req.open(method, "https://foxcav.es/api/" + url, true);
@@ -121,16 +138,20 @@ function sendAPIRequest(url, callback, tabid, method, body) {
 				chrome.tabs.create({
 					url: "https://foxcav.es/login"
 				});
-				_setUploadProgress(101, tabid);
+				if(progress_mult + progress_offset >= 1) {
+					_setDisplayProgress(101, 1, 0, tabid);
+				}
 				return;
 			}
 			callback(req);
-			_setUploadProgress(101, tabid);
+			if(progress_mult + progress_offset >= 1) {
+				_setDisplayProgress(101, 1, 0, tabid);
+			}
 		};
 		
-		req.upload.addEventListener("loadstart", function(evt) { uploadStart(evt, tabid); }, false);
-		req.upload.addEventListener("progress", function(evt) { uploadProgress(evt, tabid); }, false);
-		req.upload.addEventListener("load", function(evt) { uploadComplete(evt, tabid); }, false);
+		req.upload.addEventListener("loadstart", function(evt) { uploadStart(evt, 1, 0, tabid); }, false);
+		req.upload.addEventListener("progress", function(evt) { uploadProgress(evt, 1, 0, tabid); }, false);
+		req.upload.addEventListener("load", function(evt) { uploadComplete(evt, 1, 0, tabid); }, false);
 		
 		req.send(body);
 	});
