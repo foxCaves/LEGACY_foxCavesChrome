@@ -1,39 +1,20 @@
-/*chrome.extension.onRequest.addListener(function(msg) {
-	if(msg.dorequest) {
-		doRequest(msg, null, function() { sendResponse("DONE"); });
-		return true;
-	}
-});*/
-
 function shortenTabURL() {
-	doRequest({type: "shorten"});
+	doRequest({dorequest: "shorten"});
 }
 
 function screenshotTab() {
-	doRequest({type: "screenshot"});
+	doRequest({dorequest: "screenshot"});
 }
 
-function doRequest(obj, callback, dccallback) {
-	document.getElementById("actions").style.display = "none";
-	document.getElementById("loading").style.display = "";
-	var port = chrome.extension.connect({name: "bgcallback"});
-	port.onDisconnect.addListener(function() {
-		document.getElementById("actions").style.display = "";
-		document.getElementById("loading").style.display = "none";
-		document.getElementById("progress").value = "0";
-	});
-	if(callback) {
-		port.onMessage.addListener(callback);
+function doRequest(obj) {
+	if(!obj.tabid) {
+		chrome.tabs.getSelected(null, function(tab) {
+			obj.tabid = tab.id;
+			chrome.extension.sendMessage(obj);
+		});
+		return;
 	}
-	if(dccallback) {
-		port.onDisconnect.addListener(dccallback);
-	}
-	port.onMessage.addListener(function(msg) {
-		if(msg.progress) {
-			document.getElementById("progress").value = msg.progress;
-		}
-	});
-	port.postMessage(obj);
+	chrome.extension.sendMessage(obj);
 }
 
 window.onload = function(e) {

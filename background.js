@@ -1,24 +1,19 @@
-chrome.extension.onConnect.addListener(function(port) {
-	if(port.name != "bgcallback") return;
-	var handshakeListener;
-	handshakeListener = function(msg) {
-		port.onMessage.removeListener(handshakeListener);
-		switch(msg.type) {
-			case "shorten":
-				shortenTabURL(port);
-				break;
-			case "screenshot":
-				screenshotTab(port);
-				break;
-			case "savefile":
-				saveFile(msg.dataUrl, msg.filename, port);
-				break;
-			case "shortenurl":
-				shortenURL(msg.linkUrl, port);
-				break;
-		}
+chrome.extension.onMessage.addListener(function(msg, sender, sendMessage) {
+	switch(msg.dorequest) {
+		case "shorten":
+			shortenTabURL(msg.tabid);
+			break;
+		case "screenshot":
+			screenshotTab(msg.tabid);
+			break;
+		case "savefile":
+			saveFile(msg.dataUrl, msg.filename, msg.tabid);
+			break;
+		case "shortenurl":
+			shortenURL(msg.linkUrl, msg.tabid);
+			break;
 	}
-	port.onMessage.addListener(handshakeListener);
+	sendMessage("OK");
 });
 
 function copyToClipboard(text) {
@@ -29,21 +24,20 @@ function copyToClipboard(text) {
 	document.execCommand("copy");
 }
 
-function shortenTabURL(port) {
-	chrome.tabs.getSelected(null, function(tab) {
-		shortenURL(tab.url, port);
+function shortenTabURL(tabid) {
+	chrome.tabs.get(tabid, function(tab) {
+		shortenURL(tab.url, tabid);
 	});
 }
 
-function shortenURL(url, port) {
+function shortenURL(url, tabid) {
 	sendAPIRequest("shorten?" + url, function(req) {
 		copyToClipboard("https://fox.gy/g" + req.responseText.trim());
-		if(port) port.disconnect();
 		alert("Link shortened. Short link copied to clipboard!");
-	}, port);
+	}, tabid);
 }
 
-function saveURL(url) {
+function saveURL(url, tabid) {
 	var x = url.lastIndexOf("/");
 	var filename = url.substr(x + 1);
 	x = url.indexOf("?");
@@ -57,12 +51,12 @@ function saveURL(url) {
 			alert("Error downloading file to reupload");
 			return;
 		}
-		saveFile(req.response, filename, null);
+		saveFile(req.response, filename, tabid);
 	};
 	req.send(null);
 }
 
-function saveFile(data, filename, port) {
+function saveFile(data, filename, tabid) {
 	sendAPIRequest("create?" + filename, function(req) {
 		if(req.status != 200) {
 			alert("Error: " + req.responseText);
@@ -74,65 +68,69 @@ function saveFile(data, filename, port) {
 		var fileID = fileInfo[0];
 		
 		copyToClipboard("https://fox.gy/v" + fileID);
-		if(port) port.disconnect();
 		alert("File uploaded. Link copied to clipboard!");
-	}, port, "PUT", data);
+	}, tabid, "PUT", data);
 }
 
-function saveDataURL(dataURL, filename, port) {
+function saveDataURL(dataURL, filename, tabid) {
 	var x = dataURL.lastIndexOf(",");
 	if((!x) || x < 0) x = dataURL.lastIndexOf(";");
 	var data = Base64Binary.decodeArrayBuffer(dataURL.substr(x + 1));
 	
-	saveFile(data, filename, port);
+	saveFile(data, filename, tabid);
 }
 
-function screenshotTab(port) {
+function screenshotTab(tabid) {
 	chrome.tabs.captureVisibleTab(null, {format: "png"}, function(dataURL) {
 		chrome.tabs.getSelected(null, function(tab) {
 			var filename = tab.title + ".png";
-			saveDataURL(dataURL, filename, port);
+			saveDataURL(dataURL, filename, tab.id);
 		});
 	});
 }
 
-function _setUploadProgress(progress, port) {
-	port.postMessage({progress: progress});
+function _setUploadProgress(progress, tabid) {
+	chrome.tabs.sendMessage(tabid, {progress: progress});
 }
 
-function uploadStart(evt, port) {
-	_setUploadProgress(0, port);
+function uploadStart(evt, tabid) {
+	_setUploadProgress(0, tabid);
 }
 
-function uploadComplete(evt, port) {
-	_setUploadProgress(100, port);
+function uploadComplete(evt, tabid) {
+	_setUploadProgress(100, tabid);
 }
 
-function uploadProgress(evt, port) {
+function uploadProgress(evt, tabid) {
 	if(evt.lengthComputable) {
-		_setUploadProgress((evt.loaded / evt.total) * 100.0, port);
+		_setUploadProgress((evt.loaded / evt.total) * 100.0, tabid);
 	}
 }
 
-function sendAPIRequest(url, callback, port, method, body) {
+function sendAPIRequest(url, callback, tabid, method, body) {
 	if(!method) method = "GET";
 	if(!body) body = null;
 	
-	var req = new XMLHttpRequest();
-	req.open(method, "https://foxcav.es/api/" + url, true);
-	req.onload = function() {
-		if(req.status == 401) {
-			chrome.tabs.create({
-				url: "https://foxcav.es/login"
-			});
-			return;
-		}
-		callback(req);
-	};
-	if(port) {
-		req.upload.addEventListener("loadstart", function(evt) { uploadStart(evt, port); }, false);
-		req.upload.addEventListener("progress", function(evt) { uploadProgress(evt, port); }, false);
-		req.upload.addEventListener("load", function(evt) { uploadComplete(evt, port); }, false);
-	}
-	req.send(body);
+	chrome.tabs.executeScript(tabid, {file: "loader.js"}, function(res) {
+		_setUploadProgress(-1, tabid);
+	
+		var req = new XMLHttpRequest();
+		req.open(method, "https://foxcav.es/api/" + url, true);
+		req.onload = function() {
+			if(req.status == 401) {
+				chrome.tabs.create({
+					url: "https://foxcav.es/login"
+				});
+				return;
+			}
+			callback(req);
+			_setUploadProgress(101, tabid);
+		};
+		
+		req.upload.addEventListener("loadstart", function(evt) { uploadStart(evt, tabid); }, false);
+		req.upload.addEventListener("progress", function(evt) { uploadProgress(evt, tabid); }, false);
+		req.upload.addEventListener("load", function(evt) { uploadComplete(evt, tabid); }, false);
+		
+		req.send(body);
+	});
 }
