@@ -12,9 +12,10 @@ function doRequest(obj) {
 			obj.tabid = tab.id;
 			chrome.extension.sendMessage(obj);
 		});
-		return;
+	} else {
+		chrome.extension.sendMessage(obj);
 	}
-	chrome.extension.sendMessage(obj);
+	window.close();
 }
 
 window.onload = function(e) {
