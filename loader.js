@@ -23,11 +23,13 @@ function FC_createElement(msg) {
 	mainDiv.style.backgroundColor = "white";
 	mainDiv.style.border = "1px solid black";
 	mainDiv.style.display = "table";
+	mainDiv.style.color = "black";
 	
 	var subDiv = document.createElement("div");
 	subDiv.style.display = "table-cell";
 	subDiv.style.textAlign = "center";
 	subDiv.style.verticalAlign = "middle";
+	subDiv.style.color = "black";
 	mainDiv.appendChild(subDiv);
 	
 	if(!msg.text) msg.text = "Processing request to foxCaves...";
