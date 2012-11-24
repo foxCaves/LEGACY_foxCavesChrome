@@ -24,7 +24,7 @@ function FC_createElement(msg) {
 	mainDiv.style.border = "1px solid black";
 	mainDiv.style.display = "table";
 	mainDiv.style.color = "black";
-	mainDiv.style.zIndex = 99999999999;
+	mainDiv.style.zIndex = 1000;
 	
 	var subDiv = document.createElement("div");
 	subDiv.style.display = "table-cell";

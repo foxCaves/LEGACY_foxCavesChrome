@@ -17,6 +17,8 @@
 		"<all_urls>",
 		"tabs",
 		"clipboardWrite",
-		"contextMenus"
+		"contextMenus",
+		"notifications",
+		"pageCapture"
 	]
 }

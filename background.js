@@ -18,6 +18,14 @@ chrome.extension.onMessage.addListener(function(msg, sender, sendMessage) {
 	sendMessage("OK");
 });
 
+function showAlert(text) {
+	var notification = window.webkitNotifications.createNotification('icon.png', 'foxCaves', text);
+	notification.show();
+	window.setTimeout(function() {
+		notification.cancel();
+	}, 5000);
+}
+
 function copyToClipboard(text) {
 	var clipboard = document.getElementById("clipboard");
 	clipboard.value = text;
@@ -35,12 +43,13 @@ function shortenTabURL(tabid) {
 function shortenURL(url, tabid) {
 	sendAPIRequest("shorten?" + url, function(req) {
 		copyToClipboard("https://fox.gy/g" + req.responseText.trim());
-		alert("Link shortened. Short link copied to clipboard!");
+		showAlert("Link shortened. Short link copied to clipboard!");
 	}, tabid);
 }
 
 function saveURL(url, tabid) {
-	chrome.tabs.executeScript(tabid, {file: "loader.js"}, function(res) {
+	chrome.tabs.executeScript(tabid, {file: "loader.js"}, function(res) {	
+		alert("EXEC");
 		var x = url.lastIndexOf("/");
 		var filename = url.substr(x + 1);
 		x = url.indexOf("?");
@@ -53,7 +62,7 @@ function saveURL(url, tabid) {
 		req.open("GET", url, true);
 		req.onload = function() {
 			if(req.status != 200) {
-				alert("Error downloading file to reupload");
+				showAlert("Error downloading file to reupload");
 				return;
 			}
 			saveFile(req.response, filename, tabid, 0.5, 0.5);
@@ -68,7 +77,7 @@ function saveURL(url, tabid) {
 function saveFile(data, filename, tabid, progress_mult, progress_offset) {
 	sendAPIRequest("create?" + filename, function(req) {
 		if(req.status != 200) {
-			alert("Error: " + req.responseText);
+			showAlert("Error: " + req.responseText);
 			return;
 		}
 		
@@ -77,7 +86,7 @@ function saveFile(data, filename, tabid, progress_mult, progress_offset) {
 		var fileID = fileInfo[0];
 		
 		copyToClipboard("https://fox.gy/v" + fileID);
-		alert("File uploaded. Link copied to clipboard!");
+		showAlert("File uploaded. Link copied to clipboard!");
 	}, tabid, "PUT", data, progress_mult, progress_offset);
 }
 
@@ -125,17 +134,17 @@ function uploadProgress(evt, mult, offset, tabid) {
 }
 
 function sendAPIRequest(url, callback, tabid, method, body, progress_mult, progress_offset, dontloadloader) {
+	if(!method) method = "GET";
+	if(!body) body = null;
+	if(!progress_mult) progress_mult = 1;
+	if(!progress_offset) progress_offset = 0;
+	
 	if(progress_offset <= 0 && !dontloadloader) {
 		chrome.tabs.executeScript(tabid, {file: "loader.js"}, function(res) {
 			sendAPIRequest(url, callback, tabid, method, body, progress_mult, progress_offset, true);
 		});
 		return;
 	}
-	
-	if(!method) method = "GET";
-	if(!body) body = null;
-	if(!progress_mult) progress_mult = 1;
-	if(!progress_offset) progress_offset = 0;
 
 	_setDisplayProgressText("Uploading to foxCaves...", progress_mult, progress_offset, tabid);
 
