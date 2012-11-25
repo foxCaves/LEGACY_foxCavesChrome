@@ -19,7 +19,7 @@ chrome.extension.onMessage.addListener(function(msg, sender, sendMessage) {
 });
 
 function showAlert(text) {
-	var notification = window.webkitNotifications.createNotification('icon.png', 'foxCaves', text);
+	var notification = window.webkitNotifications.createNotification('foxcaves-32.png', 'foxCaves', text);
 	notification.show();
 	window.setTimeout(function() {
 		notification.cancel();
