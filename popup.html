@@ -3,17 +3,49 @@
 	<head>
 	<title>foxCaves Popup</title>
 		<style>
+			html {
+				background-image: linear-gradient(to bottom, #7d7d7d 0%,#0f0f0f 100%); /* W3C */
+				background-image: -webkit-linear-gradient(top left, #7d7d7d 0%, #0f0f0f 100%); /* Chrome10+,Safari5.1+ */
+			}
+			
 			body {
-				min-width:200px;
+				margin: 10px 4px;
+				min-width:355px;
 				overflow-x:hidden;
 			}
+			
+			a {
+				-webkit-transition: box-shadow .5s ease, background-image .5s ease, color .5s ease;
+				box-shadow: 1px 1px 5px #aaa;
+				padding: 2px;
+				margin: 1px;
+				font: 0.9em Verdana;
+				
+				border-radius: 4px;
+				background-image: linear-gradient(to bottom, #7d7d7d 0%,#0f0f0f 100%);
+				background-image: -webkit-linear-gradient(top, #7d7d7d 0%,#0f0f0f 100%);
+				color: #ddd;
+				text-decoration: none;
+			}
+			
+			a:hover {
+				box-shadow: 1px 1px 5px #B333E5;
+				background-image: linear-gradient(to bottom, rgba(160,160,160,1) 0%,#0f0f0f 100%);
+				background-image: -webkit-linear-gradient(top, rgba(160,160,160,1) 0%,#0f0f0f 100%);
+				color: #ccc;
+			}
+			
+			a:active {
+				background-image: linear-gradient(to bottom, rgba(185,185,185,1) 0%,#0f0f0f 100%);
+				background-image: -webkit-linear-gradient(top, rgba(185,185,185,1) 0%,#0f0f0f 100%);
+				color: #bbb;
+			}
 		</style>
-		<script src="base64-binary.js"></script>
 	</head>
 	<body>
-		<a href="#" id="shorten-tab-url">Shorten current tab URL</a><br />
-		<a href="#" id="screenshot-tab">Screenshot current tab</a><br />
-		<a href="#" id="open-my-files">My files</a><br />
+		<a href="#" id="shorten-tab-url">Shorten URL</a>
+		<a href="#" id="screenshot-tab">Take Screenshot</a>
+		<a href="#" id="open-my-files">My files</a>
 		<a href="#" id="open-my-links">My links</a>
 		<script src="popup.js"></script>
 	</body>
