@@ -3,7 +3,6 @@
 	"version": "1.0",
 	"manifest_version": 2,
 	"description": "Extension for foxCaves in your browser",
-	"key": "bjdphmigbnjjnaglgckhfcfjamkbiekj",
 	"homepage_url": "https://foxcav.es",
 	"browser_action": {
 		"default_icon": "foxcaves-19.png",
