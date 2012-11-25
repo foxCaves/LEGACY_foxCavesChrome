@@ -6,10 +6,14 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 		case "shortenLink":
 			shortenURL(info.linkUrl, tab.id);
 			break;
+		case "shortenFile":
+			shortenURL(info.srcUrl, tab.id);
+			break;
 	}
 });
 
 chrome.runtime.onInstalled.addListener(function() {
-	chrome.contextMenus.create({"title": "Upload this to your foxCaves", "contexts": ["image", "video", "audio"], "id": "saveFile"});
+	chrome.contextMenus.create({"title": "Upload this files to your foxCaves", "contexts": ["image", "video", "audio"], "id": "saveFile"});
+	chrome.contextMenus.create({"title": "Shorten link to this file with fox.gy", "contexts": ["image", "video", "audio"], "id": "shortenFile"});
 	chrome.contextMenus.create({"title": "Shorten link with fox.gy", "contexts": ["link"], "id": "shortenLink"});
 });
