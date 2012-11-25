@@ -3,8 +3,11 @@
 	"version": "1.0",
 	"manifest_version": 2,
 	"description": "Extension for foxCaves in your browser",
+	"key": "bjdphmigbnjjnaglgckhfcfjamkbiekj",
+	"homepage_url": "https://foxcav.es",
 	"browser_action": {
-		"default_icon": "icon.png",
+		"default_icon": "foxcaves-19.png",
+		"default_title": "foxCaves for Chrome",
 		"default_popup": "popup.html"
 	},
 	"background": {
@@ -20,5 +23,11 @@
 		"contextMenus",
 		"notifications",
 		"pageCapture"
-	]
+	],
+	"icons": {
+		"16": "foxcaves-16.png",
+		"32": "foxcaves-32.png",
+		"48": "foxcaves-48.png",
+		"128": "foxcaves-128.png"
+	}
 }
