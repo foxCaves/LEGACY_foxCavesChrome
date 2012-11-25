@@ -1,8 +1,8 @@
 {
 	"name": "foxCaves",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"manifest_version": 2,
-	"description": "Extension for foxCaves in your browser",
+	"description": "foxCaves screenshot and file sharing right in your browser",
 	"homepage_url": "https://foxcav.es",
 	"browser_action": {
 		"default_icon": "foxcaves-19.png",
