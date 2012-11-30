@@ -42,14 +42,13 @@ function shortenTabURL(tabid) {
 
 function shortenURL(url, tabid) {
 	sendAPIRequest("shorten?" + url, function(req) {
-		copyToClipboard("https://fox.gy/g" + req.responseText.trim());
+		copyToClipboard("http://fox.gy/g" + req.responseText.trim());
 		showAlert("Link shortened. Short link copied to clipboard!");
 	}, tabid);
 }
 
 function saveURL(url, tabid) {
 	chrome.tabs.executeScript(tabid, {file: "loader.js"}, function(res) {	
-		alert("EXEC");
 		var x = url.lastIndexOf("/");
 		var filename = url.substr(x + 1);
 		x = url.indexOf("?");
@@ -85,7 +84,7 @@ function saveFile(data, filename, tabid, progress_mult, progress_offset) {
 		var fileInfo = file[1].split(">");
 		var fileID = fileInfo[0];
 		
-		copyToClipboard("https://fox.gy/v" + fileID);
+		copyToClipboard("http://fox.gy/v" + fileID);
 		showAlert("File uploaded. Link copied to clipboard!");
 	}, tabid, "PUT", data, progress_mult, progress_offset);
 }
