@@ -14,6 +14,6 @@ chrome.contextMenus.onClicked.addListener(function(info, tab) {
 
 chrome.runtime.onInstalled.addListener(function() {
 	chrome.contextMenus.create({"title": "Upload this files to your foxCaves", "contexts": ["image", "video", "audio"], "id": "saveFile"});
-	chrome.contextMenus.create({"title": "Shorten link to this file with fox.gy", "contexts": ["image", "video", "audio"], "id": "shortenFile"});
-	chrome.contextMenus.create({"title": "Shorten link with fox.gy", "contexts": ["link"], "id": "shortenLink"});
+	chrome.contextMenus.create({"title": "Shorten link to this file with fox.re", "contexts": ["image", "video", "audio"], "id": "shortenFile"});
+	chrome.contextMenus.create({"title": "Shorten link with fox.re", "contexts": ["link"], "id": "shortenLink"});
 });
